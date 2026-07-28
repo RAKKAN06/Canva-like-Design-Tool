@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>CanvasStudio Pro - Infinite Pan & Grid Movement</title>
+    <!-- Google Fonts for rich typography -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Roboto+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: #1e1f22;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+        background: #2c2d31;
+      }
+
+      .toolbar {
+        background: #2c2d31;
+        border-bottom: 1px solid #3e3f44;
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        z-index: 100;
+      }
+
+      .tool-btn {
+        background: #3e3f44;
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: 0.1s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tool-btn:hover {
+        background: #5a5b62;
+      }
+
+      .tool-btn.primary {
+        background: #3b82f6;
+      }
+
+      .tool-btn.primary:hover {
+        background: #2563eb;
+      }
+
+      .tool-btn.danger {
+        background: #dc2626;
+      }
+      .tool-btn.danger:hover {
+        background: #b91c1c;
+      }
+
+      .zoom-control {
+        display: flex;
+        gap: 4px;
+        background: #3e3f44;
+        border-radius: 20px;
+        padding: 2px 6px;
+      }
+
+      .zoom-control button {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0 8px;
+      }
+
+      .separator {
+        width: 1px;
+        height: 24px;
+        background: #5a5b62;
+        margin: 0 4px;
+      }
+
+      .main-layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .sidebar-left {
+        width: 260px;
+        background: #25262b;
+        border-right: 1px solid #3e3f44;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        padding: 16px;
+        gap: 24px;
+      }
+
+      .section-title {
+        color: #a1a2a8;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+      }
+
+      .element-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .element-card {
+        background: #3e3f44;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.1s;
+        color: white;
+        font-size: 13px;
+      }
+
+      .element-card:hover {
+        background: #5a5b62;
+        transform: translateY(-2px);
+      }
+
+      .upload-area {
+        background: #3e3f44;
+        border: 1px dashed #7c7f8c;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        color: #cbd5e1;
+        transition: 0.1s;
+      }
+      .upload-area:hover {
+        background: #4a4b52;
+      }
+
+      .sidebar-right {
+        width: 300px;
+        background: #25262b;
+        border-left: 1px solid #3e3f44;
+        padding: 20px 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .property-group {
+        margin-bottom: 16px;
+      }
+
+      .property-group label {
+        display: block;
+        font-size: 11px;
+        color: #a1a2a8;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+
+      .property-group input,
+      .property-group select {
+        width: 100%;
+        background: #3e3f44;
+        border: 1px solid #5a5b62;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      .property-group input:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+
+      .layers-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .layers-list {
+        max-height: 320px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .layer-item {
+        background: #3e3f44;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        transition: 0.1s;
+        border: 1px solid transparent;
+      }
+      .layer-item:hover {
+        background: #4a4b52;
+      }
+      .layer-item.selected {
+        background: #1e3a5f;
+        border-color: #3b82f6;
+      }
+      .layer-item.locked {
+        opacity: 0.6;
+        background: #2a2b30;
+      }
+      .layer-icon {
+        font-size: 14px;
+        width: 24px;
+        text-align: center;
+      }
+      .layer-name {
+        flex: 1;
+        font-size: 12px;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .layer-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .layer-action-btn {
+        background: transparent;
+        border: none;
+        color: #cbd5e1;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px;
+        border-radius: 4px;
+        transition: 0.1s;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .layer-action-btn:hover {
+        background: #5a5b62;
+        color: white;
+      }
+      .layer-action-btn.delete-btn:hover {
+        background: #dc2626;
+        color: white;
+      }
+
+      .canvas-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #1a1b1e;
+        cursor: grab;
+      }
+      .canvas-container.panning {
+        cursor: grabbing;
+      }
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
+      }
+
+      /* Inline text editor overlay */
+      .inline-textarea {
+        position: absolute;
+        background: rgba(30, 30, 35, 0.95);
+        color: white;
+        border: 2px solid #3b82f6;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-family: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        text-align: inherit;
+        resize: both;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        outline: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 2000;
+      }
+
+      /* Pan hint */
+      .pan-hint {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 100;
+        font-family: monospace;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e1f22;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #5a5b62;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="toolbar">
+        <button class="tool-btn" id="undoBtn">↩️ Undo</button>
+        <button class="tool-btn" id="redoBtn">↪️ Redo</button>
+        <div class="separator"></div>
+        <div class="zoom-control">
+          <button id="zoomOut">−</button>
+          <span
+            id="zoomPercent"
+            style="color: white; min-width: 50px; text-align: center"
+            >100%</span
+          >
+          <button id="zoomIn">+</button>
+          <button id="zoomReset" style="margin-left: 6px">Reset</button>
+        </div>
+        <div class="separator"></div>
+        <button class="tool-btn" id="exportPNG">📸 Export PNG</button>
+        <button class="tool-btn primary" id="exportJPEG">🖼️ Export JPEG</button>
+        <div class="separator"></div>
+        <button class="tool-btn" id="toggleGrid">📐 Toggle Grid</button>
+        <button class="tool-btn" id="saveProject">💾 Save Project</button>
+        <input
+          type="file"
+          id="loadProjectFile"
+          accept=".json"
+          style="display: none"
+        />
+        <button class="tool-btn" id="loadProjectBtn">📂 Load Project</button>
+        <button class="tool-btn danger" id="deleteSelectedBtn">
+          🗑️ Delete Selected
+        </button>
+        <button class="tool-btn" id="resetPanBtn" title="Reset View">
+          🎯 Reset View
+        </button>
+      </div>
+      <div class="main-layout">
+        <div class="sidebar-left">
+          <div>
+            <div class="section-title">➕ ADD ELEMENTS</div>
+            <div class="element-grid">
+              <div class="element-card" data-type="text">📝 Text</div>
+              <div class="element-card" data-type="rect">⬛ Rectangle</div>
+              <div class="element-card" data-type="circle">⚪ Circle</div>
+              <div class="element-card" data-type="line">➖ Line</div>
+            </div>
+          </div>
+          <div>
+            <div class="section-title">🖼️ UPLOAD IMAGE</div>
+            <div class="upload-area" id="imageUploadArea">
+              📤 Click or drag image
+              <input
+                type="file"
+                id="imageUpload"
+                accept="image/*"
+                style="display: none"
+              />
+            </div>
+          </div>
+          <div>
+            <div class="section-title">💾 STORAGE</div>
+            <button class="tool-btn" id="newDesignBtn" style="width: 100%">
+              ✨ New Design
+            </button>
+          </div>
+        </div>
+        <div class="canvas-container" id="canvasContainer">
+          <canvas id="mainCanvas"></canvas>
+          <div class="pan-hint">
+            🖱️ Drag with mouse to move canvas in any direction | Space + Drag
+            for pan mode
+          </div>
+        </div>
+        <div class="sidebar-right">
+          <div>
+            <div class="section-title">🎨 PROPERTIES</div>
+            <div id="propertiesPanel">
+              <div style="color: #a1a2a8; text-align: center; padding: 20px">
+                Select an element
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="layers-header">
+              <div class="section-title" style="margin-bottom: 0">
+                📁 LAYERS
+              </div>
+              <button
+                class="tool-btn"
+                id="deleteAllLayersBtn"
+                style="padding: 4px 8px; font-size: 11px"
+              >
+                Clear All
+              </button>
+            </div>
+            <div id="layersPanel" class="layers-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---------- STATE MANAGEMENT ----------
+      let appState = {
+        elements: [],
+        selectedIds: [],
+        zoom: 1.0,
+        pan: { x: 0, y: 0 }, // Pan offset: how much the canvas is shifted
+        gridEnabled: true,
+      };
+
+      let historyStack = [];
+      let historyIndex = -1;
+      let activeTextEditor = null;
+
+      // DOM elements
+      const canvas = document.getElementById("mainCanvas");
+      const container = document.getElementById("canvasContainer");
+      let ctx = canvas.getContext("2d");
+
+      // Panning state (canvas movement with mouse)
+      let isPanningMode = false;
+      let panStartPoint = { x: 0, y: 0 };
+      let panStartPan = { x: 0, y: 0 };
+      let spacePressed = false;
+
+      // Element drag state
+      let selectedElement = null;
+      let dragHandle = null;
+      let dragStartPos = { x: 0, y: 0 };
+      let dragStartElementProps = null;
+
+      function uid() {
+        return Date.now() + "-" + Math.random().toString(36).substr(2, 8);
+      }
+
+      // History management
+      function pushHistory() {
+        const clone = JSON.parse(
+          JSON.stringify({
+            elements: appState.elements,
+            selectedIds: appState.selectedIds,
+          }),
+        );
+        historyStack = historyStack.slice(0, historyIndex + 1);
+        historyStack.push(clone);
+        historyIndex++;
+        if (historyStack.length > 50) historyStack.shift();
+      }
+
+      function restoreFromHistory(snapshot) {
+        appState.elements = snapshot.elements;
+        appState.selectedIds = snapshot.selectedIds;
+        renderLayersPanel();
+        updatePropertiesPanel();
+        renderCanvas();
+      }
+
+      function undo() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          restoreFromHistory(historyStack[historyIndex]);
+        }
+      }
+      function redo() {
+        if (historyIndex < historyStack.length - 1) {
+          historyIndex++;
+          restoreFromHistory(historyStack[historyIndex]);
+        }
+      }
+
+      function recordAction(actionFn) {
+        actionFn();
+        pushHistory();
+        renderCanvas();
+        renderLayersPanel();
+        updatePropertiesPanel();
+        autoSave();
+      }
+
+      function autoSave() {
+        localStorage.setItem(
+          "canvasstudio_autosave",
+          JSON.stringify({
+            elements: appState.elements,
+            zoom: appState.zoom,
+            pan: appState.pan,
+          }),
+        );
+      }
+
+      function loadAutoSave() {
+        const saved = localStorage.getItem("canvasstudio_autosave");
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            appState.elements = (data.elements || []).map((el) => ({
+              ...el,
+              locked: el.locked || false,
+              visible: el.visible !== false,
+            }));
+            appState.zoom = data.zoom || 1;
+            appState.pan = data.pan || { x: 0, y: 0 };
+            appState.selectedIds = [];
+            pushHistory();
+            renderCanvas();
+            renderLayersPanel();
+          } catch (e) {}
+        }
+      }
+
+      function saveProjectToFile() {
+        const data = {
+          elements: appState.elements,
+          zoom: appState.zoom,
+          pan: appState.pan,
+          version: 2,
+        };
+        const blob = new Blob([JSON.stringify(data)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `design_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function loadProjectFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = JSON.parse(e.target.result);
+          appState.elements = (data.elements || []).map((el) => ({
+            ...el,
+            locked: el.locked || false,
+            visible: el.visible !== false,
+          }));
+          appState.zoom = data.zoom || 1;
+          appState.pan = data.pan || { x: 0, y: 0 };
+          appState.selectedIds = [];
+          updateZoomUI();
+          pushHistory();
+          renderCanvas();
+          renderLayersPanel();
+          updatePropertiesPanel();
+        };
+        reader.readAsText(file);
+      }
+
+      function deleteSelectedElements() {
+        const unlockedSelected = appState.selectedIds.filter((id) => {
+          const el = appState.elements.find((e) => e.id === id);
+          return el && !el.locked;
+        });
+        if (unlockedSelected.length === 0) return;
+        appState.elements = appState.elements.filter(
+          (el) => !unlockedSelected.includes(el.id),
+        );
+        appState.selectedIds = appState.selectedIds.filter(
+          (id) => !unlockedSelected.includes(id),
+        );
+        recordAction(() => {});
+      }
+
+      function deleteAllLayers() {
+        const unlockedElements = appState.elements.filter((el) => !el.locked);
+        if (unlockedElements.length === 0) return;
+        appState.elements = appState.elements.filter((el) => el.locked);
+        appState.selectedIds = [];
+        recordAction(() => {});
+      }
+
+      function deleteSingleLayer(layerId) {
+        const el = appState.elements.find((e) => e.id === layerId);
+        if (el && el.locked) return;
+        appState.elements = appState.elements.filter((e) => e.id !== layerId);
+        appState.selectedIds = appState.selectedIds.filter(
+          (id) => id !== layerId,
+        );
+        recordAction(() => {});
+      }
+
+      function toggleLockLayer(layerId) {
+        const el = appState.elements.find((e) => e.id === layerId);
+        if (el) {
+          el.locked = !el.locked;
+          if (el.locked && appState.selectedIds.includes(layerId)) {
+            appState.selectedIds = appState.selectedIds.filter(
+              (id) => id !== layerId,
+            );
+          }
+          recordAction(() => {});
+        }
+      }
+
+      function toggleVisibility(layerId) {
+        const el = appState.elements.find((e) => e.id === layerId);
+        if (el) {
+          el.visible = el.visible === undefined ? false : !el.visible;
+          recordAction(() => {});
+        }
+      }
+
+      // Reset view (center pan)
+      function resetView() {
+        appState.pan = { x: 0, y: 0 };
+        appState.zoom = 1;
+        updateZoomUI();
+        renderCanvas();
+        pushHistory();
+      }
+
+      // ----- INLINE TEXT EDITING -----
+      function closeTextEditor() {
+        if (activeTextEditor) {
+          document.body.removeChild(activeTextEditor);
+          activeTextEditor = null;
+        }
+      }
+
+      function openInlineTextEditor(element, canvasX, canvasY) {
+        if (element.locked) return;
+        closeTextEditor();
+
+        const screenX = canvasX * appState.zoom + appState.pan.x;
+        const screenY = canvasY * appState.zoom + appState.pan.y;
+        const screenWidth = (element.w || 200) * appState.zoom;
+        const screenHeight = (element.h || 70) * appState.zoom;
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "inline-textarea";
+        textarea.value = element.text || "Edit me";
+        textarea.style.left = `${screenX}px`;
+        textarea.style.top = `${screenY}px`;
+        textarea.style.width = `${screenWidth}px`;
+        textarea.style.height = `${screenHeight}px`;
+        textarea.style.fontFamily = element.fontFamily || "Inter";
+        textarea.style.fontSize = `${(element.fontSize || 24) * appState.zoom}px`;
+        textarea.style.fontWeight = element.fontWeight || "normal";
+        textarea.style.fontStyle = element.fontStyle || "normal";
+        textarea.style.textAlign = element.textAlign || "center";
+        textarea.style.color = element.color || "#ffffff";
+        textarea.style.backgroundColor = "rgba(0,0,0,0.8)";
+        textarea.style.border = "2px solid #3b82f6";
+        textarea.style.borderRadius = "4px";
+        textarea.style.resize = "both";
+        textarea.style.overflow = "auto";
+
+        document.body.appendChild(textarea);
+        activeTextEditor = textarea;
+        textarea.focus();
+
+        const saveText = () => {
+          if (element) {
+            element.text = textarea.value;
+            recordAction(() => {});
+            renderCanvas();
+          }
+          closeTextEditor();
+        };
+
+        textarea.addEventListener("blur", saveText);
+        textarea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            saveText();
+          }
+          if (e.key === "Escape") {
+            closeTextEditor();
+          }
+        });
+      }
+
+      // ----- ELEMENT CREATION -----
+      function addElement(type, x, y) {
+        const baseX = (x - appState.pan.x) / appState.zoom;
+        const baseY = (y - appState.pan.y) / appState.zoom;
+        let newEl = {
+          id: uid(),
+          type: type,
+          x: baseX,
+          y: baseY,
+          rotation: 0,
+          opacity: 1,
+          stroke: "#000000",
+          fill: "#3b82f6",
+          locked: false,
+          visible: true,
+        };
+        if (type === "text") {
+          newEl = {
+            ...newEl,
+            w: 200,
+            h: 70,
+            text: "Double-click to edit",
+            fontFamily: "Inter",
+            fontSize: 24,
+            fontWeight: "normal",
+            fontStyle: "normal",
+            textAlign: "center",
+            color: "#ffffff",
+            letterSpacing: 0,
+            fill: "transparent",
+          };
+        } else if (type === "rect") {
+          newEl = {
+            ...newEl,
+            w: 120,
+            h: 120,
+            fill: "#f97316",
+            strokeWidth: 2,
+            borderRadius: 8,
+          };
+        } else if (type === "circle") {
+          newEl = { ...newEl, w: 100, h: 100, fill: "#10b981", strokeWidth: 2 };
+        } else if (type === "line") {
+          newEl = { ...newEl, w: 150, h: 4, fill: "#ffffff", strokeWidth: 3 };
+        }
+        appState.elements.push(newEl);
+        appState.selectedIds = [newEl.id];
+        recordAction(() => {});
+        return newEl;
+      }
+
+      function addImageFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const centerX =
+              (container.clientWidth / 2 - appState.pan.x) / appState.zoom;
+            const centerY =
+              (container.clientHeight / 2 - appState.pan.y) / appState.zoom;
+            const newImg = {
+              id: uid(),
+              type: "image",
+              x: centerX - 100,
+              y: centerY - 75,
+              w: 200,
+              h: 150,
+              rotation: 0,
+              opacity: 1,
+              locked: false,
+              visible: true,
+              src: e.target.result,
+              imgData: e.target.result,
+              stroke: "#000",
+              fill: "transparent",
+            };
+            appState.elements.push(newImg);
+            appState.selectedIds = [newImg.id];
+            recordAction(() => {});
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Rendering engine with infinite grid
+      function renderCanvas() {
+        if (!ctx) return;
+        const rect = container.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+
+        // Apply pan transformation
+        ctx.translate(appState.pan.x, appState.pan.y);
+        ctx.scale(appState.zoom, appState.zoom);
+
+        // Draw infinite grid (dynamic based on pan/zoom)
+        if (appState.gridEnabled) {
+          const step = 30;
+          const startX =
+            Math.floor(-appState.pan.x / appState.zoom / step) * step;
+          const startY =
+            Math.floor(-appState.pan.y / appState.zoom / step) * step;
+          const endX = startX + canvas.width / appState.zoom + step;
+          const endY = startY + canvas.height / appState.zoom + step;
+
+          ctx.beginPath();
+          ctx.strokeStyle = "#5a5b62";
+          ctx.lineWidth = 0.5;
+
+          for (let x = startX; x < endX; x += step) {
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+          }
+          for (let y = startY; y < endY; y += step) {
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+          }
+          ctx.stroke();
+
+          // Draw thicker lines every 150px
+          ctx.beginPath();
+          ctx.strokeStyle = "#7c7f8c";
+          ctx.lineWidth = 0.8;
+          for (let x = startX; x < endX; x += step * 5) {
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+          }
+          for (let y = startY; y < endY; y += step * 5) {
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+          }
+          ctx.stroke();
+        }
+
+        // Draw all elements
+        appState.elements.forEach((el) => {
+          if (el.visible === false) return;
+          ctx.save();
+          ctx.globalAlpha = el.opacity || 1;
+          ctx.translate(el.x + (el.w || 0) / 2, el.y + (el.h || 0) / 2);
+          ctx.rotate((el.rotation * Math.PI) / 180);
+          ctx.translate(-(el.w || 0) / 2, -(el.h || 0) / 2);
+
+          if (el.type === "rect") {
+            ctx.fillStyle = el.fill;
+            ctx.fillRect(0, 0, el.w, el.h);
+            if (el.strokeWidth) {
+              ctx.strokeStyle = el.stroke;
+              ctx.lineWidth = el.strokeWidth;
+              ctx.strokeRect(0, 0, el.w, el.h);
+            }
+          } else if (el.type === "circle") {
+            ctx.beginPath();
+            ctx.ellipse(
+              el.w / 2,
+              el.h / 2,
+              el.w / 2,
+              el.h / 2,
+              0,
+              0,
+              2 * Math.PI,
+            );
+            ctx.fillStyle = el.fill;
+            ctx.fill();
+            if (el.strokeWidth) {
+              ctx.strokeStyle = el.stroke;
+              ctx.lineWidth = el.strokeWidth;
+              ctx.stroke();
+            }
+          } else if (el.type === "line") {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(el.w, 0);
+            ctx.strokeStyle = el.fill;
+            ctx.lineWidth = el.strokeWidth || 3;
+            ctx.stroke();
+          } else if (el.type === "text") {
+            ctx.font = `${el.fontStyle || "normal"} ${el.fontWeight || "normal"} ${el.fontSize}px ${el.fontFamily}`;
+            ctx.fillStyle = el.color || "#ffffff";
+            ctx.textAlign = el.textAlign || "center";
+            ctx.textBaseline = "middle";
+            const lines = (el.text || "Text").split("\n");
+            const lineHeight = el.fontSize * 1.2;
+            const startYOffset = (el.h - (lines.length - 1) * lineHeight) / 2;
+            lines.forEach((line, idx) => {
+              ctx.fillText(line, el.w / 2, startYOffset + idx * lineHeight);
+            });
+          } else if (el.type === "image" && el.src) {
+            const img = new Image();
+            img.src = el.src;
+            if (img.complete) ctx.drawImage(img, 0, 0, el.w, el.h);
+            else img.onload = () => renderCanvas();
+          }
+          ctx.restore();
+
+          // Draw selection bounding box
+          if (appState.selectedIds.includes(el.id) && !el.locked) {
+            ctx.save();
+            ctx.translate(el.x + (el.w || 0) / 2, el.y + (el.h || 0) / 2);
+            ctx.rotate((el.rotation * Math.PI) / 180);
+            ctx.translate(-(el.w || 0) / 2, -(el.h || 0) / 2);
+            ctx.strokeStyle = "#3b82f6";
+            ctx.lineWidth = 2 / appState.zoom;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(-2, -2, (el.w || 0) + 4, (el.h || 0) + 4);
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect((el.w || 0) - 6, (el.h || 0) - 6, 10, 10);
+            ctx.fillRect(-4, -4, 10, 10);
+            ctx.fillRect((el.w || 0) / 2 - 5, -12, 10, 10);
+            ctx.restore();
+          }
+        });
+        ctx.restore();
+      }
+
+      // Layers Panel
+      function renderLayersPanel() {
+        const panel = document.getElementById("layersPanel");
+        panel.innerHTML = "";
+        if (appState.elements.length === 0) {
+          panel.innerHTML =
+            '<div style="color:#6b6f7a; text-align:center; padding:20px;">No layers</div>';
+          return;
+        }
+        appState.elements.forEach((el, idx) => {
+          const div = document.createElement("div");
+          div.className = `layer-item ${appState.selectedIds.includes(el.id) ? "selected" : ""} ${el.locked ? "locked" : ""}`;
+          div.draggable = true;
+          div.innerHTML = `
+                <div class="layer-icon">${el.type === "text" ? "📝" : el.type === "rect" ? "⬛" : el.type === "circle" ? "⚪" : el.type === "line" ? "➖" : "🖼️"}</div>
+                <div class="layer-name">${el.type} ${el.id.slice(-5)} ${el.locked ? "🔒" : ""} ${el.visible === false ? "👁️‍🗨️" : ""}</div>
+                <div class="layer-actions">
+                    <button class="layer-action-btn" data-action="visibility" data-id="${el.id}" title="Toggle Visibility">${el.visible === false ? "👁️‍🗨️" : "👁️"}</button>
+                    <button class="layer-action-btn" data-action="lock" data-id="${el.id}" title="Lock/Unlock">${el.locked ? "🔒" : "🔓"}</button>
+                    <button class="layer-action-btn delete-btn" data-action="delete" data-id="${el.id}" title="Delete Layer">🗑️</button>
+                </div>
+            `;
+          div.addEventListener("click", (e) => {
+            if (!e.target.closest(".layer-actions")) {
+              if (!el.locked) {
+                appState.selectedIds = [el.id];
+                renderLayersPanel();
+                updatePropertiesPanel();
+                renderCanvas();
+              }
+            }
+          });
+          div.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", idx);
+          });
+          div.addEventListener("dragover", (e) => e.preventDefault());
+          div.addEventListener("drop", (e) => {
+            const fromIdx = parseInt(e.dataTransfer.getData("text/plain"));
+            const toIdx = idx;
+            if (fromIdx !== toIdx) {
+              const [moved] = appState.elements.splice(fromIdx, 1);
+              appState.elements.splice(toIdx, 0, moved);
+              recordAction(() => {});
+            }
+          });
+          panel.appendChild(div);
+        });
+        document
+          .querySelectorAll('[data-action="visibility"]')
+          .forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              toggleVisibility(btn.dataset.id);
+            });
+          });
+        document.querySelectorAll('[data-action="lock"]').forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleLockLayer(btn.dataset.id);
+          });
+        });
+        document.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteSingleLayer(btn.dataset.id);
+          });
+        });
+      }
+
+      function updatePropertiesPanel() {
+        const panel = document.getElementById("propertiesPanel");
+        if (!appState.selectedIds.length) {
+          panel.innerHTML =
+            '<div style="color:#a1a2a8; text-align:center; padding:20px;">Select an element</div>';
+          return;
+        }
+        const el = appState.elements.find(
+          (e) => e.id === appState.selectedIds[0],
+        );
+        if (!el || el.locked) {
+          panel.innerHTML =
+            '<div style="color:#a1a2a8; text-align:center; padding:20px;">🔒 Element is locked</div>';
+          return;
+        }
+        panel.innerHTML = `
+            <div class="property-group"><label>X</label><input type="number" id="propX" value="${Math.round(el.x)}" step="1"></div>
+            <div class="property-group"><label>Y</label><input type="number" id="propY" value="${Math.round(el.y)}" step="1"></div>
+            <div class="property-group"><label>Width</label><input type="number" id="propW" value="${Math.round(el.w || 100)}" step="1"></div>
+            <div class="property-group"><label>Height</label><input type="number" id="propH" value="${Math.round(el.h || 100)}" step="1"></div>
+            <div class="property-group"><label>Rotation</label><input type="number" id="propRot" value="${el.rotation}" step="1"></div>
+            <div class="property-group"><label>Fill</label><input type="color" id="propFill" value="${el.fill || "#ffffff"}"></div>
+            <div class="property-group"><label>Opacity</label><input type="range" min="0" max="1" step="0.01" id="propOpac" value="${el.opacity || 1}"></div>
+            ${
+              el.type === "text"
+                ? `<div class="property-group"><label>Font Size</label><input type="number" id="propFontSize" value="${el.fontSize || 24}"></div>
+            <div class="property-group"><label>Font Family</label><select id="propFontFamily"><option>Inter</option><option>Arial</option><option>Georgia</option></select></div>
+            <div class="property-group"><label>Text Color</label><input type="color" id="propColor" value="${el.color || "#ffffff"}"></div>`
+                : ""
+            }
+        `;
+        const inputs = panel.querySelectorAll("input, select");
+        inputs.forEach((inp) =>
+          inp.addEventListener("change", (e) => {
+            if (inp.id === "propX") el.x = parseFloat(inp.value);
+            if (inp.id === "propY") el.y = parseFloat(inp.value);
+            if (inp.id === "propW") el.w = parseFloat(inp.value);
+            if (inp.id === "propH") el.h = parseFloat(inp.value);
+            if (inp.id === "propRot") el.rotation = parseFloat(inp.value);
+            if (inp.id === "propFill") el.fill = inp.value;
+            if (inp.id === "propOpac") el.opacity = parseFloat(inp.value);
+            if (inp.id === "propFontSize") el.fontSize = parseFloat(inp.value);
+            if (inp.id === "propFontFamily") el.fontFamily = inp.value;
+            if (inp.id === "propColor") el.color = inp.value;
+            recordAction(() => {});
+          }),
+        );
+        if (el.type === "text" && document.getElementById("propFontFamily")) {
+          document.getElementById("propFontFamily").value =
+            el.fontFamily || "Inter";
+          document.getElementById("propColor").value = el.color || "#ffffff";
+        }
+      }
+
+      // Canvas Panning with mouse (move grid in any direction)
+      function startPanning(e) {
+        if (spacePressed || e.button === 1 || (e.button === 0 && e.shiftKey)) {
+          isPanningMode = true;
+          container.style.cursor = "grabbing";
+          panStartPoint = { x: e.clientX, y: e.clientY };
+          panStartPan = { x: appState.pan.x, y: appState.pan.y };
+          e.preventDefault();
+          return true;
+        }
+        return false;
+      }
+
+      function doPanning(e) {
+        if (!isPanningMode) return false;
+        const dx = e.clientX - panStartPoint.x;
+        const dy = e.clientY - panStartPoint.y;
+        appState.pan.x = panStartPan.x + dx;
+        appState.pan.y = panStartPan.y + dy;
+        renderCanvas();
+        return true;
+      }
+
+      function stopPanning() {
+        if (isPanningMode) {
+          isPanningMode = false;
+          container.style.cursor = spacePressed ? "grab" : "grab";
+          pushHistory();
+        }
+      }
+
+      // Element interaction
+      function handleMouseDown(e) {
+        closeTextEditor();
+
+        // Check for panning first
+        if (startPanning(e)) return;
+
+        const rectCanvas = canvas.getBoundingClientRect();
+        const mouseX =
+          (e.clientX - rectCanvas.left - appState.pan.x) / appState.zoom;
+        const mouseY =
+          (e.clientY - rectCanvas.top - appState.pan.y) / appState.zoom;
+        let hit = null;
+        for (let i = appState.elements.length - 1; i >= 0; i--) {
+          const el = appState.elements[i];
+          if (el.locked || el.visible === false) continue;
+          const left = el.x,
+            right = el.x + (el.w || 0),
+            top = el.y,
+            bottom = el.y + (el.h || 0);
+          if (
+            mouseX >= left &&
+            mouseX <= right &&
+            mouseY >= top &&
+            mouseY <= bottom
+          ) {
+            hit = el;
+            break;
+          }
+        }
+        if (hit) {
+          if (!e.shiftKey) appState.selectedIds = [hit.id];
+          else if (!appState.selectedIds.includes(hit.id))
+            appState.selectedIds.push(hit.id);
+          renderLayersPanel();
+          updatePropertiesPanel();
+          renderCanvas();
+          selectedElement = hit;
+          dragStartPos = { x: mouseX, y: mouseY };
+          dragStartElementProps = { x: hit.x, y: hit.y };
+          dragHandle = "move";
+        } else if (e.button === 0) {
+          appState.selectedIds = [];
+          renderLayersPanel();
+          updatePropertiesPanel();
+          renderCanvas();
+        }
+      }
+
+      function handleMouseMove(e) {
+        if (doPanning(e)) return;
+        if (!selectedElement || !dragHandle || selectedElement.locked) return;
+        const rectCanvas = canvas.getBoundingClientRect();
+        const mouseX =
+          (e.clientX - rectCanvas.left - appState.pan.x) / appState.zoom;
+        const mouseY =
+          (e.clientY - rectCanvas.top - appState.pan.y) / appState.zoom;
+        const dx = mouseX - dragStartPos.x;
+        const dy = mouseY - dragStartPos.y;
+        if (dragHandle === "move") {
+          selectedElement.x = dragStartElementProps.x + dx;
+          selectedElement.y = dragStartElementProps.y + dy;
+        }
+        recordAction(() => {});
+        renderCanvas();
+      }
+
+      function handleMouseUp(e) {
+        stopPanning();
+        if (selectedElement) {
+          selectedElement = null;
+          dragHandle = null;
+          pushHistory();
+        }
+      }
+
+      function handleCanvasDoubleClick(e) {
+        const rectCanvas = canvas.getBoundingClientRect();
+        const mouseX =
+          (e.clientX - rectCanvas.left - appState.pan.x) / appState.zoom;
+        const mouseY =
+          (e.clientY - rectCanvas.top - appState.pan.y) / appState.zoom;
+
+        for (let i = appState.elements.length - 1; i >= 0; i--) {
+          const el = appState.elements[i];
+          if (el.type === "text" && !el.locked) {
+            const left = el.x,
+              right = el.x + (el.w || 0);
+            const top = el.y,
+              bottom = el.y + (el.h || 0);
+            if (
+              mouseX >= left &&
+              mouseX <= right &&
+              mouseY >= top &&
+              mouseY <= bottom
+            ) {
+              e.stopPropagation();
+              openInlineTextEditor(el, el.x, el.y);
+              break;
+            }
+          }
+        }
+      }
+
+      function updateZoomUI() {
+        document.getElementById("zoomPercent").innerText =
+          Math.round(appState.zoom * 100) + "%";
+        renderCanvas();
+      }
+      function zoomBy(delta) {
+        appState.zoom = Math.min(5, Math.max(0.2, appState.zoom + delta));
+        updateZoomUI();
+      }
+      function resetZoom() {
+        appState.zoom = 1;
+        updateZoomUI();
+        renderCanvas();
+      }
+
+      function initCanvasEvents() {
+        canvas.addEventListener("mousedown", handleMouseDown);
+        canvas.addEventListener("dblclick", handleCanvasDoubleClick);
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+
+        container.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const delta = -e.deltaY * 0.005;
+          const oldZoom = appState.zoom;
+          const newZoom = Math.min(5, Math.max(0.2, oldZoom + delta));
+          if (newZoom !== oldZoom) {
+            // Zoom toward mouse position
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const beforeX = (mouseX - appState.pan.x) / oldZoom;
+            const beforeY = (mouseY - appState.pan.y) / oldZoom;
+            appState.zoom = newZoom;
+            appState.pan.x = mouseX - beforeX * newZoom;
+            appState.pan.y = mouseY - beforeY * newZoom;
+            updateZoomUI();
+          }
+        });
+
+        window.addEventListener("keydown", (e) => {
+          if (e.code === "Space") {
+            spacePressed = true;
+            container.style.cursor = "grab";
+            e.preventDefault();
+          }
+          if (e.key === "Delete") {
+            deleteSelectedElements();
+          }
+          if (e.ctrlKey && e.key === "z") {
+            e.preventDefault();
+            undo();
+          }
+          if (e.ctrlKey && e.key === "y") {
+            e.preventDefault();
+            redo();
+          }
+          if (e.ctrlKey && e.key === "d" && appState.selectedIds[0]) {
+            const orig = appState.elements.find(
+              (el) => el.id === appState.selectedIds[0],
+            );
+            if (orig && !orig.locked) {
+              const clone = JSON.parse(JSON.stringify(orig));
+              clone.id = uid();
+              clone.x += 20;
+              clone.y += 20;
+              clone.locked = false;
+              appState.elements.push(clone);
+              appState.selectedIds = [clone.id];
+              recordAction(() => {});
+            }
+          }
+        });
+        window.addEventListener("keyup", (e) => {
+          if (e.code === "Space") {
+            spacePressed = false;
+            if (!isPanningMode) container.style.cursor = "grab";
+          }
+        });
+      }
+
+      // UI binding
+      document.querySelectorAll(".element-card").forEach((card) => {
+        card.addEventListener("click", (e) => {
+          addElement(
+            card.dataset.type,
+            container.clientWidth / 2,
+            container.clientHeight / 2,
+          );
+        });
+      });
+      document
+        .getElementById("imageUploadArea")
+        .addEventListener("click", () =>
+          document.getElementById("imageUpload").click(),
+        );
+      document.getElementById("imageUpload").addEventListener("change", (e) => {
+        if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+      });
+      document.getElementById("undoBtn").onclick = () => undo();
+      document.getElementById("redoBtn").onclick = () => redo();
+      document.getElementById("zoomIn").onclick = () => zoomBy(0.1);
+      document.getElementById("zoomOut").onclick = () => zoomBy(-0.1);
+      document.getElementById("zoomReset").onclick = resetZoom;
+      document.getElementById("resetPanBtn").onclick = resetView;
+      document.getElementById("exportPNG").onclick = () => {
+        renderCanvas();
+        const link = document.createElement("a");
+        link.download = "design.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      };
+      document.getElementById("exportJPEG").onclick = () => {
+        renderCanvas();
+        const link = document.createElement("a");
+        link.download = "design.jpg";
+        link.href = canvas.toDataURL("image/jpeg", 0.9);
+        link.click();
+      };
+      document.getElementById("toggleGrid").onclick = () => {
+        appState.gridEnabled = !appState.gridEnabled;
+        renderCanvas();
+      };
+      document.getElementById("saveProject").onclick = saveProjectToFile;
+      document.getElementById("loadProjectBtn").onclick = () =>
+        document.getElementById("loadProjectFile").click();
+      document
+        .getElementById("loadProjectFile")
+        .addEventListener("change", (e) => {
+          if (e.target.files[0]) loadProjectFromFile(e.target.files[0]);
+        });
+      document.getElementById("newDesignBtn").onclick = () => {
+        appState.elements = [];
+        appState.selectedIds = [];
+        pushHistory();
+        renderCanvas();
+        renderLayersPanel();
+        updatePropertiesPanel();
+      };
+      document.getElementById("deleteSelectedBtn").onclick =
+        deleteSelectedElements;
+      document.getElementById("deleteAllLayersBtn").onclick = deleteAllLayers;
+
+      function init() {
+        loadAutoSave();
+        initCanvasEvents();
+        pushHistory();
+        renderCanvas();
+        setInterval(() => autoSave(), 5000);
+        window.addEventListener("resize", () => renderCanvas());
+      }
+      init();
+    </script>
+  </body>
+</html>
